@@ -80,8 +80,8 @@ async def get_elections():
     return {
         "status": "open",
         "candidates": [
-            {"id": "cand_1", "name": "Alice Johnson", "position": "President"},
-            {"id": "cand_2", "name": "Bob Smith", "position": "President"}
+            {"id": "cand_1", "name": "Abc", "position": "President"},
+            {"id": "cand_2", "name": "Xyz", "position": "President"}
         ]
     }
 
