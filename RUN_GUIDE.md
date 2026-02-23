@@ -32,10 +32,10 @@ The blockchain needs to be running first to record the votes.
 ## Step 3: Start the Backend API
 The backend handles student logins and talks to the blockchain.
 1. Open **another new terminal**.
-2. Run these commands:
+2. Stay in the **main project folder** (do not cd into backend).
+3. Run this command:
    ```bash
-   cd backend
-   uvicorn main:app --reload --port 8000
+   python3 -m uvicorn backend.main:app --reload --port 8000
    ```
 *Keep this terminal open as well.*
 

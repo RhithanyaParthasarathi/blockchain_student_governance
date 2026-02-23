@@ -3,10 +3,13 @@ from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import timedelta
 import httpx
-from dotenv import load_dotenv
 import os
+from dotenv import load_dotenv
 
-load_dotenv()
+# Get the path to the .env file in the backend directory
+base_dir = os.path.dirname(os.path.abspath(__file__))
+env_path = os.path.join(base_dir, ".env")
+load_dotenv(dotenv_path=env_path)
 
 from backend.database import init_db, students_collection
 from backend.models import StudentModel, StudentCreate, StudentResponse, Token, VoteSubmit
