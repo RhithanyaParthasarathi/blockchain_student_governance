@@ -1,0 +1,35 @@
+{
+    "chain": [
+        {
+            "index": 1,
+            "timestamp": 1771819683.98259,
+            "transactions": [],
+            "proof": 100,
+            "previous_hash": "1"
+        },
+        {
+            "index": 2,
+            "timestamp": 1771820006.789103,
+            "transactions": [
+                {
+                    "voter_id": "student_123",
+                    "candidate_id": "Alice"
+                }
+            ],
+            "proof": 189983,
+            "previous_hash": "1810fb6ea8044a34a8d6155645240fe9499f8d338021f3cbcb40eafa299ddad4"
+        },
+        {
+            "index": 3,
+            "timestamp": 1771820054.465896,
+            "transactions": [
+                {
+                    "voter_id": "student_456",
+                    "candidate_id": "Alice"
+                }
+            ],
+            "proof": 42585,
+            "previous_hash": "5d383a7fe2bc8d19dc48652a2afedc0ebf041fd45ef3966780d9464a466a8432"
+        }
+    ]
+}
