@@ -20,9 +20,16 @@ from backend.auth import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
     verify_password
 )
+from fastapi.responses import HTMLResponse
 from backend.blockchain_client import blockchain_client
 
 app = FastAPI(title="Student Governance Backend API")
+
+@app.get("/dashboard", response_class=HTMLResponse)
+async def get_dashboard():
+    dashboard_path = os.path.join(os.path.dirname(base_dir), "blockchain_model", "dashboard.html")
+    with open(dashboard_path, "r") as f:
+        return f.read()
 
 app.add_middleware(
     CORSMiddleware,

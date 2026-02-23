@@ -30,6 +30,18 @@
             ],
             "proof": 42585,
             "previous_hash": "5d383a7fe2bc8d19dc48652a2afedc0ebf041fd45ef3966780d9464a466a8432"
+        },
+        {
+            "index": 4,
+            "timestamp": 1771855433.270877,
+            "transactions": [
+                {
+                    "voter_id": "student_124",
+                    "candidate_id": "Alice"
+                }
+            ],
+            "proof": 97691,
+            "previous_hash": "bac24a33f342fbdc4bc5e892a3d5f4e70e22b455053d12692a8f50582a8b8ab4"
         }
     ]
 }

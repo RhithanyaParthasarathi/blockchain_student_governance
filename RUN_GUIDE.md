@@ -73,3 +73,14 @@ We will use the "Interactive Documentation" to test the system without writing a
 - Click on **GET /results**.
 - Click **Try it out** -> **Execute**.
 - You will see the live vote counts directly from the blockchain!
+
+---
+
+## Step 5: Visualizing the Blockchain Dashboard (Premium)
+For a better experience, you can use our built-in real-time dashboard:
+1. Open your browser to: **[http://localhost:8000/dashboard](http://localhost:8000/dashboard)**
+2. You will see all 3 blockchain nodes in real-time.
+3. You can manually:
+   - **Add Votes**: Directly to a specific node.
+   - **Mine Blocks**: To solidify pending votes.
+   - **Sync Chain**: To resolve any differences between nodes using our consensus algorithm.
