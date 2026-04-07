@@ -21,6 +21,11 @@ class Blockchain:
         self.nodes = set()
         self.storage_file = f"chain_{self.port}.json"
         
+        # Performance Metrics
+        self.mining_times = []
+        self.rejected_blocks = 0
+        self.difficulty = 4  # Default difficulty
+        
         # Try to load existing chain
         self.load_chain()
         
@@ -75,7 +80,8 @@ class Blockchain:
                 return False
 
             # Check that the Proof of Work is correct
-            if not self.valid_proof(last_block['proof'], block['proof'], last_block_hash):
+            if not self.valid_proof(last_block['proof'], block['proof'], last_block_hash, self.difficulty):
+                self.rejected_blocks += 1
                 return False
 
             last_block = block
@@ -180,23 +186,24 @@ class Blockchain:
         last_hash = self.hash(last_block)
 
         proof = 0
-        while self.valid_proof(last_proof, proof, last_hash) is False:
+        while self.valid_proof(last_proof, proof, last_hash, self.difficulty) is False:
             proof += 1
 
         return proof
 
     @staticmethod
-    def valid_proof(last_proof, proof, last_hash):
+    def valid_proof(last_proof, proof, last_hash, difficulty=4):
         """
         Validates the Proof
         :param last_proof: Previous Proof
         :param proof: Current Proof
         :param last_hash: The hash of the Previous Block
+        :param difficulty: The number of leading zeroes required
         :return: True if correct, False if not.
         """
         guess = f'{last_proof}{proof}{last_hash}'.encode()
         guess_hash = hashlib.sha256(guess).hexdigest()
-        return guess_hash[:4] == "0000"
+        return guess_hash[:difficulty] == "0" * difficulty
 
 
 # Instantiate the Node
@@ -232,7 +239,12 @@ class NodesModel(BaseModel):
 async def mine():
     # We run the proof of work algorithm to get the next proof...
     last_block = blockchain.last_block
+    start_time = time()
     proof = blockchain.proof_of_work(last_block)
+    end_time = time()
+    
+    mining_duration = end_time - start_time
+    blockchain.mining_times.append(mining_duration)
 
     # We must receive a reward for finding the proof.
     # We can omit the reward for a private voting system, 
@@ -321,6 +333,43 @@ async def consensus():
 @app.get('/')
 def home():
     return {"message": f"Blockchain node running on port {port}"}
+
+@app.get('/metrics')
+def get_metrics():
+    avg_mine_time = sum(blockchain.mining_times) / len(blockchain.mining_times) if blockchain.mining_times else 0
+    return {
+        "port": blockchain.port,
+        "chain_length": len(blockchain.chain),
+        "avg_mining_time": round(avg_mine_time, 4),
+        "rejected_blocks": blockchain.rejected_blocks,
+        "difficulty": blockchain.difficulty,
+        "pending_transactions": len(blockchain.current_transactions)
+    }
+
+@app.post('/simulate/attack/51')
+def simulate_51_attack(difficulty: int = 1):
+    """Reduces difficulty to simulate a massive hash power advantage"""
+    blockchain.difficulty = difficulty
+    return {"message": f"Difficulty reduced to {difficulty}. Node is now in 'Attacker Mode'."}
+
+@app.post('/simulate/attack/reset')
+def reset_difficulty():
+    blockchain.difficulty = 4
+    return {"message": "Difficulty reset to 4. Node is back to normal."}
+
+@app.post('/simulate/force_invalid_block')
+def force_invalid_block():
+    """Forces an invalid block onto this node's chain to test neighbor rejection"""
+    last_block = blockchain.last_block
+    bad_block = {
+        'index': len(blockchain.chain) + 1,
+        'timestamp': time(),
+        'transactions': [{"voter_id": "TAMPERED_VOTE", "candidate_id": "MALICIOUS"}],
+        'proof': 1, # Obviously wrong proof
+        'previous_hash': blockchain.hash(last_block),
+    }
+    blockchain.chain.append(bad_block)
+    return {"message": "Invalid block forced onto node."}
 
 if __name__ == '__main__':
     import uvicorn

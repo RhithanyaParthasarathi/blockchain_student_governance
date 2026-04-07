@@ -101,7 +101,7 @@ async def submit_vote(vote: VoteSubmit, current_user: dict = Depends(get_current
         )
         
         # Trigger mining to confirm block
-        await blockchain_client.trigger_mine()
+        #await blockchain_client.trigger_mine()
         
     except httpx.HTTPError as e:
         raise HTTPException(status_code=500, detail=f"Blockchain network error: {str(e)}")

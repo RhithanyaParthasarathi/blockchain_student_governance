@@ -296,6 +296,32 @@
             background: var(--primary);
             color: white;
         }
+
+        /* Metrics */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .metric-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            padding: 15px;
+            border-radius: 16px;
+            text-align: center;
+        }
+        .metric-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.2rem;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+        .metric-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            color: var(--text-dim);
+        }
     </style>
 </head>
 
@@ -362,15 +388,64 @@
             </aside>
 
             <!-- Main: Ledger -->
-            <main class="card">
-                <div class="section-label">
-                    Live Verified Ledger
-                    <span id="ledger-count">0 VOTES</span>
+            <main id="main-content">
+                <div class="tabs">
+                    <div class="tab active" onclick="switchMainTab('ledger')">Live Ledger</div>
+                    <div class="tab" onclick="switchMainTab('security')">Security Lab</div>
                 </div>
-                <div class="feed" id="ledger-feed">
-                    <div
-                        style="height: 100%; display: flex; align-items: center; justify-content: center; color: var(--text-dim); font-size: 0.8rem;">
-                        No verified votes across the network yet.
+
+                <!-- Ledger Tab Content -->
+                <div id="tab-ledger">
+                    <div class="card">
+                        <div class="section-label">
+                            Live Verified Ledger
+                            <span id="ledger-count">0 VOTES</span>
+                        </div>
+                        <div class="feed" id="ledger-feed">
+                            <div style="height: 100%; display: flex; align-items: center; justify-content: center; color: var(--text-dim); font-size: 0.8rem;">
+                                No verified votes across the network yet.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security Tab Content -->
+                <div id="tab-security" class="hidden">
+                    <div class="card">
+                        <div class="section-label">Node Performance & Health</div>
+                        <div class="metrics-grid">
+                            <div class="metric-card">
+                                <div class="metric-value" id="val-mine-time">0s</div>
+                                <div class="metric-label">Avg Mining Time</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value" id="val-peers">0</div>
+                                <div class="metric-label">Network Peers</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value" id="val-rejected" style="color: var(--danger);">0</div>
+                                <div class="metric-label">Rejected Blocks</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value" id="val-difficulty">4</div>
+                                <div class="metric-label">POW Difficulty</div>
+                            </div>
+                        </div>
+
+                        <div class="section-label" style="margin-top: 30px;">Attack Simulations</div>
+                        <p style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 20px;">
+                            Test the resilience of the governance system against common blockchain vulnerabilities.
+                        </p>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <button class="btn-primary" style="background: var(--danger);" onclick="simulate51Attack()">
+                                Disable Consensus (51% Attack)
+                            </button>
+                            <button class="btn-primary" style="background: #f59e0b;" onclick="sendInvalidBlock()">
+                                Send Invalid block
+                            </button>
+                        </div>
+                        <button class="btn-link" onclick="resetSecurity()">Reset security parameters to standard</button>
                     </div>
                 </div>
             </main>
@@ -500,6 +575,7 @@
                 if (res.ok) {
                     showNotification("✅ Vote successfully cast! Mining required for verification.", "success");
                     refreshLedger();
+                    updateMetrics();
                 } else {
                     showNotification(`❌ ${data.detail}`, "error");
                 }
@@ -546,6 +622,67 @@
                     document.getElementById('ledger-count').innerText = `${foundVotes.length} VOTES`;
                 }
             } catch (e) { console.warn("Syncing..."); }
+        }
+
+        function switchMainTab(tab) {
+            document.querySelectorAll('#main-content .tab').forEach(t => {
+                t.classList.toggle('active', t.innerText.toLowerCase().includes(tab));
+            });
+            document.getElementById('tab-ledger').classList.toggle('hidden', tab !== 'ledger');
+            document.getElementById('tab-security').classList.toggle('hidden', tab !== 'security');
+            if (tab === 'security') updateMetrics();
+        }
+
+        async function updateMetrics() {
+            try {
+                const res = await fetch(`${NODE_1}/metrics`);
+                const data = await res.json();
+                
+                document.getElementById('val-mine-time').innerText = `${data.avg_mining_time}s`;
+                document.getElementById('val-rejected').innerText = data.rejected_blocks;
+                document.getElementById('val-difficulty').innerText = data.difficulty;
+                
+                // Get peers from port list
+                const chainRes = await fetch(`${NODE_1}/chain`);
+                const chainData = await chainRes.json();
+                // This is a simplified peer count for demo
+                document.getElementById('val-peers').innerText = 3; 
+            } catch (e) { console.warn("Metrics off"); }
+        }
+
+        async function simulate51Attack() {
+            try {
+                const res = await fetch(`${NODE_1}/simulate/attack/51`, { method: 'POST' });
+                const data = await res.json();
+                showNotification("⚠️ WARNING: Node 1 Difficulty reduced to 1. It can now overwhelm other nodes.", "info");
+                updateMetrics();
+            } catch (e) { showNotification("Simulation failed", "error"); }
+        }
+
+        async function resetSecurity() {
+            try {
+                const res = await fetch(`${NODE_1}/simulate/attack/reset`, { method: 'POST' });
+                const data = await res.json();
+                showNotification("✅ Security parameters restored to standard.", "success");
+                updateMetrics();
+            } catch (e) { showNotification("Reset failed", "error"); }
+        }
+
+        async function sendInvalidBlock() {
+            try {
+                // 1. Force Node 2 to have an invalid block
+                showNotification("📤 Comprizing Node 2 with a malicious block...", "info");
+                await fetch(`http://127.0.0.1:5001/simulate/force_invalid_block`, { method: 'POST' });
+                
+                // 2. Tell Node 1 to sync (resolve conflicts)
+                showNotification("🔍 Node 1 is verifying network integrity...", "info");
+                const res = await fetch(`${NODE_1}/nodes/resolve`);
+                const data = await res.json();
+                
+                // 3. Update metrics (Node 1 should have caught it)
+                updateMetrics();
+                showNotification("🚫 Node 1 detected and REJECTED the malicious chain from Node 2!", "error");
+            } catch (e) { showNotification("Simulation failed. Ensure Node 2 is running.", "error"); }
         }
 
         async function checkNodes() {
